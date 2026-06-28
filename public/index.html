@@ -1,0 +1,4394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Textbook Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <style>
+        :root {
+            --primary: #F5E6D3;
+            --primary-light: #EDD9C0;
+            --accent: #D4A574;
+            --accent-glow: rgba(212, 165, 116, 0.4);
+            --secondary: #8B7355;
+            --warm: #C4956A;
+            --text: #4A3728;
+            --text-muted: rgba(74, 55, 40, 0.6);
+            --card-bg: rgba(255, 250, 245, 0.7);
+            --card-border: rgba(139, 115, 85, 0.2);
+            --bg-secondary: rgba(237, 217, 192, 0.5);
+            --bg-overlay: rgba(245, 230, 211, 0.8);
+            --input-bg: rgba(255, 250, 245, 0.8);
+            --border-light: rgba(139, 115, 85, 0.3);
+            --shadow-color: rgba(74, 55, 40, 0.15);
+            --glass-bg: rgba(255, 250, 245, 0.85);
+            --glass-border: rgba(139, 115, 85, 0.15);
+        }
+
+        .dark-mode {
+            --primary: #0a0a0a;
+            --primary-light: #151515;
+            --accent: #D4A574;
+            --accent-glow: rgba(212, 165, 116, 0.3);
+            --secondary: #2a2a2a;
+            --warm: #C4956A;
+            --text: #E8E0D5;
+            --text-muted: rgba(232, 224, 213, 0.6);
+            --card-bg: rgba(30, 30, 30, 0.85);
+            --card-border: rgba(212, 165, 116, 0.15);
+            --bg-secondary: rgba(20, 20, 20, 0.7);
+            --bg-overlay: rgba(10, 10, 10, 0.85);
+            --input-bg: rgba(30, 30, 30, 0.8);
+            --border-light: rgba(212, 165, 116, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --glass-bg: rgba(25, 25, 25, 0.9);
+            --glass-border: rgba(212, 165, 116, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 磨砂效果 */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 丝滑滚动效果 */
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 90px;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--warm);
+        }
+
+        /* 元素入场动画 */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+        }
+
+        /* 滚动触发动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 80%;
+            height: 150%;
+            background: radial-gradient(ellipse at center, var(--secondary) 0%, transparent 70%);
+            opacity: 0.1;
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -20%;
+            width: 60%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, var(--accent) 0%, transparent 70%);
+            opacity: 0.05;
+            animation: bgFloat 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(5deg); }
+            66% { transform: translate(-20px, 20px) rotate(-3deg); }
+        }
+
+        /* 浮动符号 */
+        .math-symbols {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .math-symbol {
+            position: absolute;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.03);
+            font-weight: 300;
+            animation: floatSymbol 15s ease-in-out infinite;
+        }
+
+        .math-symbol:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; font-size: 3rem; }
+        .math-symbol:nth-child(2) { top: 20%; right: 10%; animation-delay: -2s; font-size: 2rem; }
+        .math-symbol:nth-child(3) { top: 60%; left: 8%; animation-delay: -4s; font-size: 2.5rem; }
+        .math-symbol:nth-child(4) { top: 70%; right: 5%; animation-delay: -6s; font-size: 1.8rem; }
+        .math-symbol:nth-child(5) { top: 40%; right: 15%; animation-delay: -8s; font-size: 2.2rem; }
+        .math-symbol:nth-child(6) { bottom: 20%; left: 15%; animation-delay: -10s; font-size: 1.6rem; }
+        .math-symbol:nth-child(7) { top: 85%; right: 20%; animation-delay: -12s; font-size: 2.8rem; }
+        .math-symbol:nth-child(8) { top: 35%; left: 20%; animation-delay: -14s; font-size: 1.4rem; }
+
+        @keyframes floatSymbol {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.03; }
+            50% { transform: translateY(-20px) rotate(10deg); opacity: 0.06; }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 60px;
+            z-index: 100;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .navbar:hover {
+            background: var(--glass-bg);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--warm) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            overflow: hidden;
+        }
+
+        .logo-icon.has-image {
+            background: transparent;
+            padding: 0;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .nav-links {
+            display: none;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+
+        .nav-icon-btn span {
+            line-height: 1;
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+
+        /* Hero 区域 */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero > * {
+            margin-bottom: 20px;
+        }
+
+        .hero > *:last-child {
+            margin-bottom: 0;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .hero h1 {
+            background: linear-gradient(135deg, var(--accent) 0%, #a855f7 50%, var(--warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 50px;
+            font-weight: 300;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 20px;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--warm) 100%);
+            color: var(--primary);
+            box-shadow: 0 4px 30px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 40px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 滚动提示 */
+        .scroll-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+
+        .scroll-indicator::after {
+            content: '';
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--accent), transparent);
+            animation: scrollLine 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollLine {
+            0%, 100% { opacity: 0.3; height: 40px; }
+            50% { opacity: 1; height: 60px; }
+        }
+
+        /* 章节区域 */
+        .section {
+            padding: 120px 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 16px auto 0;
+            font-size: 1.1rem;
+        }
+
+        /* 科目卡片 */
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .topic-card {
+            width: 240px;
+            height: 320px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .topic-card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .topic-card:hover .topic-card-inner {
+            transform: rotateY(-5deg) rotateX(5deg) translateZ(10px);
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, var(--card-bg), var(--card-bg-light));
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: 
+                2px 0 0 rgba(0,0,0,0.1),
+                4px 0 0 rgba(0,0,0,0.05),
+                6px 0 0 rgba(0,0,0,0.02),
+                8px 0 20px rgba(0,0,0,0.3),
+                0 4px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 24px 16px;
+            border: 1px solid var(--card-border);
+        }
+
+        .book-cover-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.35;
+            transition: opacity 0.3s ease;
+        }
+
+        .topic-card:hover .book-cover-image {
+            opacity: 0.5;
+        }
+
+        .book-cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+        }
+
+        .book-cover-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .book-spine {
+            width: 16px;
+            height: 100%;
+            position: absolute;
+            left: -16px;
+            top: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+            border-radius: 4px 0 0 4px;
+            transform: rotateY(90deg);
+            transform-origin: right center;
+            box-shadow: inset 2px 0 4px rgba(0,0,0,0.2);
+        }
+
+        .book-spine::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .book-spine::after {
+            content: '';
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .book-top-edge {
+            position: absolute;
+            top: -2px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(0,0,0,0.1), rgba(255,255,255,0.3));
+            border-radius: 4px 12px 0 0;
+        }
+
+        .book-bottom-edge {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(0,0,0,0.2), rgba(0,0,0,0.05));
+            border-radius: 0 0 12px 4px;
+        }
+
+        .book-pages {
+            position: absolute;
+            right: -4px;
+            top: 8px;
+            bottom: 8px;
+            width: 8px;
+            background: linear-gradient(90deg, #f8f8f8 0%, #e8e8e8 50%, #f0f0f0 100%);
+            border-radius: 0 4px 4px 0;
+            box-shadow: inset 2px 0 4px rgba(0,0,0,0.05);
+        }
+
+        .book-pages::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                180deg,
+                transparent 0px,
+                transparent 12px,
+                rgba(0,0,0,0.03) 12px,
+                rgba(0,0,0,0.03) 13px
+            );
+        }
+
+        .topic-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .topic-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 6px;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .topic-author {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .topic-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            text-align: center;
+            margin-bottom: 16px;
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .topic-count {
+            font-size: 0.75rem;
+            color: var(--accent);
+            padding: 4px 12px;
+            background: rgba(212, 165, 116, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(212, 165, 116, 0.2);
+        }
+
+        .topic-card:hover .book-cover {
+            box-shadow: 
+                2px 0 0 rgba(0,0,0,0.1),
+                4px 0 0 rgba(0,0,0,0.05),
+                6px 0 0 rgba(0,0,0,0.02),
+                12px 4px 30px rgba(0,0,0,0.4),
+                0 8px 30px var(--accent-glow);
+        }
+
+        .topic-card:hover .topic-icon {
+            transform: scale(1.05);
+        }
+
+        /* 科目详情页 */
+        .subject-page {
+            display: none;
+            padding-top: 100px;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        .subject-header {
+            padding: 80px 60px 60px;
+            text-align: center;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-4px);
+        }
+
+        .dark-mode .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .subject-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .subject-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .subject-desc {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        /* 章节列表 */
+        .chapters-list {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 60px 60px;
+        }
+
+        .chapter-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px 30px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chapter-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent);
+            transform: translateX(8px);
+        }
+
+        .chapter-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .chapter-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .chapter-arrow {
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .chapter-item:hover .chapter-arrow {
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        /* 章节详情页 */
+        .chapter-page {
+            display: none;
+            padding-top: 100px;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 章节页封面背景 */
+        .chapter-page-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            filter: blur(2px);
+            transition: opacity 0.5s ease;
+        }
+
+        .chapter-page-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(var(--bg-rgb), 0.85) 0%, rgba(var(--bg-rgb), 0.95) 100%);
+        }
+
+        .chapter-header {
+            padding: 40px 60px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* 工具栏样式 */
+        .chapter-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .toolbar-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .toolbar-center .chapter-title {
+            font-size: 1.5rem;
+            margin: 0;
+            display: inline-block;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn:active {
+            transform: translateY(0);
+        }
+
+        .toolbar-btn.icon-only {
+            padding: 8px 12px;
+            min-width: 36px;
+            justify-content: center;
+        }
+
+        .font-size-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 2px;
+        }
+
+        .font-size-control .toolbar-btn {
+            background: transparent;
+            border: none;
+            padding: 6px 10px;
+        }
+
+        .font-size-control .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: none;
+        }
+
+        .font-size-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 180px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 200;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text);
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .dropdown-item.active {
+            background: rgba(212, 165, 116, 0.2);
+            color: var(--accent);
+        }
+
+        .font-settings-menu {
+            min-width: 280px;
+            padding: 16px;
+        }
+
+        .font-settings-section {
+            margin-bottom: 16px;
+        }
+
+        .font-settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .font-settings-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .font-size-value {
+            color: var(--accent);
+            font-weight: 700;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .font-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        .dark-mode .font-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23D4A574' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        }
+
+        .dark-mode .toolbar-btn {
+            color: var(--accent);
+            background: rgba(212, 165, 116, 0.1);
+            border-color: rgba(212, 165, 116, 0.3);
+        }
+
+        .dark-mode .toolbar-btn:hover {
+            background: rgba(212, 165, 116, 0.2);
+            border-color: var(--accent);
+        }
+
+        .dark-mode .toolbar-btn svg {
+            stroke: var(--accent);
+        }
+
+        .font-select:hover {
+            border-color: var(--accent);
+        }
+
+        .font-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .font-size-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .font-size-mini-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .font-size-mini-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .font-size-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: var(--border-light);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .font-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .font-size-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .font-size-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .font-weight-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .weight-btn {
+            padding: 8px 4px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .weight-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .weight-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--primary);
+        }
+
+        .font-reset-section {
+            padding-top: 8px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .reset-btn {
+            width: 100%;
+            justify-content: center;
+            background: rgba(212, 165, 116, 0.1);
+            color: var(--accent);
+        }
+
+        .reset-btn:hover {
+            background: rgba(212, 165, 116, 0.2);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+        }
+
+        .chapter-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .chapter-formula {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 40px;
+            display: inline-block;
+        }
+
+        .chapter-content {
+            font-size: 1.1rem;
+            line-height: 1.9;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 60px;
+            padding-bottom: 120px;
+            min-height: 297mm;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .chapter-content h2 {
+            font-size: 1.8rem;
+            margin: 1.5em 0 0.8em;
+            color: var(--text);
+        }
+
+        .chapter-content h3 {
+            font-size: 1.4rem;
+            margin: 1.2em 0 0.6em;
+            color: var(--text);
+        }
+
+        .chapter-content p {
+            margin: 1em 0;
+            color: var(--text);
+        }
+
+        .chapter-content ul, .chapter-content ol {
+            margin: 1em 0;
+            padding-left: 1.5em;
+            color: var(--text);
+        }
+
+        .chapter-content li {
+            margin: 0.5em 0;
+        }
+        
+        /* 隐藏断页线标记（用户端不显示） */
+        .page-break-marker,
+        .chapter-content .page-break-marker {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .chapter-content img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 1.5em 0;
+        }
+
+        /* 页脚 */
+        .footer {
+            padding: 60px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* 阅读区域布局 - 正文 + 笔记栏 */
+        .reader-layout {
+            display: flex;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 30px 60px;
+            position: relative;
+        }
+
+        /* 真实翻页效果 - 柔软纸质书风格 */
+        .chapter-reader {
+            position: relative;
+            perspective: 1800px;
+            perspective-origin: 20% 50%;
+            flex: 0 0 65%;
+            min-width: 0;
+        }
+
+        .chapter-reader .chapter-content {
+            position: relative;
+            z-index: 1;
+            min-height: 297mm;
+        }
+
+        /* 笔记侧边栏 */
+        .notes-sidebar {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+            max-height: calc(100vh - 40px);
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px 16px 0 0;
+            border-bottom: none;
+        }
+
+        .notes-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notes-save-status {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .notes-save-status.saved {
+            color: #22c55e;
+        }
+
+        /* 笔记工具栏 */
+        .notes-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-top: none;
+            border-bottom: none;
+        }
+
+        .notes-toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .notes-toolbar label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .notes-toolbar select,
+        .notes-toolbar input[type="number"] {
+            background: var(--input-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .notes-toolbar input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: var(--input-bg);
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        /* 笔记编辑器 */
+        .notes-editor {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 0 0 16px 16px;
+            padding: 20px;
+            overflow-y: auto;
+            min-height: 400px;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 350px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text);
+            resize: none;
+            line-height: 1.7;
+            font-family: inherit;
+        }
+
+        .notes-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 笔记分隔线 - 视觉分隔 */
+        .notes-divider {
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+            opacity: 0.3;
+            margin: 0;
+        }
+
+        /* 翻页层 - 模拟正在翻动的柔软书页 */
+        .page-flip-layer {
+            position: absolute;
+            top: 0;
+            left: 60px;
+            right: 60px;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            z-index: 100;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        .page-flip-front,
+        .page-flip-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+        }
+
+        .page-flip-front {
+            z-index: 2;
+            border-radius: 0 24px 24px 0;
+            border-left: none;
+        }
+
+        /* 翻页时正面内容渐隐 */
+        .page-flip-front .page-content-clone {
+            animation: contentFadeOut 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        .flipping-prev .page-flip-front .page-content-clone {
+            animation: contentFadeIn 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes contentFadeOut {
+            0% { opacity: 1; }
+            30% { opacity: 0.9; }
+            60% { opacity: 0.5; }
+            100% { opacity: 0.1; }
+        }
+
+        @keyframes contentFadeIn {
+            0% { opacity: 0.1; }
+            40% { opacity: 0.5; }
+            70% { opacity: 0.9; }
+            100% { opacity: 1; }
+        }
+
+        .page-flip-back {
+            transform: rotateY(180deg);
+            background: var(--primary-light);
+            border-radius: 24px 0 0 24px;
+            border-right: none;
+        }
+
+        /* 翻页动画 - 下一页（从右向左翻，柔软纸张效果） */
+        .page-flip-layer.flipping-next {
+            animation: softFlipNext 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        /* 翻页动画 - 上一页（从左向右翻，柔软纸张效果） */
+        .page-flip-layer.flipping-prev {
+            animation: softFlipPrev 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes softFlipNext {
+            0% {
+                transform: rotateY(0deg) skewY(0deg) translateX(0) translateY(0);
+            }
+            10% {
+                transform: rotateY(-15deg) skewY(1.5deg) translateX(0) translateY(-3px);
+            }
+            25% {
+                transform: rotateY(-40deg) skewY(3deg) translateX(0) translateY(-8px);
+            }
+            40% {
+                transform: rotateY(-70deg) skewY(2.5deg) translateX(0) translateY(-6px);
+            }
+            50% {
+                transform: rotateY(-90deg) skewY(0deg) translateX(0) translateY(0);
+            }
+            60% {
+                transform: rotateY(-110deg) skewY(-2.5deg) translateX(0) translateY(-6px);
+            }
+            75% {
+                transform: rotateY(-140deg) skewY(-3deg) translateX(0) translateY(-8px);
+            }
+            90% {
+                transform: rotateY(-165deg) skewY(-1.5deg) translateX(0) translateY(-3px);
+            }
+            100% {
+                transform: rotateY(-180deg) skewY(0deg) translateX(0) translateY(0);
+            }
+        }
+
+        @keyframes softFlipPrev {
+            0% {
+                transform: rotateY(-180deg) skewY(0deg) translateX(0) translateY(0);
+            }
+            10% {
+                transform: rotateY(-165deg) skewY(-1.5deg) translateX(0) translateY(-3px);
+            }
+            25% {
+                transform: rotateY(-140deg) skewY(-3deg) translateX(0) translateY(-8px);
+            }
+            40% {
+                transform: rotateY(-110deg) skewY(-2.5deg) translateX(0) translateY(-6px);
+            }
+            50% {
+                transform: rotateY(-90deg) skewY(0deg) translateX(0) translateY(0);
+            }
+            60% {
+                transform: rotateY(-70deg) skewY(2.5deg) translateX(0) translateY(-6px);
+            }
+            75% {
+                transform: rotateY(-40deg) skewY(3deg) translateX(0) translateY(-8px);
+            }
+            90% {
+                transform: rotateY(-15deg) skewY(1.5deg) translateX(0) translateY(-3px);
+            }
+            100% {
+                transform: rotateY(0deg) skewY(0deg) translateX(0) translateY(0);
+            }
+        }
+
+        /* 书页弯曲光影层 - 模拟柔软纸面的弯曲光影 */
+        .page-bend-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .page-flip-front .page-bend-overlay {
+            background: linear-gradient(
+                100deg,
+                rgba(0,0,0,0) 0%,
+                rgba(0,0,0,0) 40%,
+                rgba(255,255,255,0.03) 50%,
+                rgba(0,0,0,0.06) 60%,
+                rgba(0,0,0,0) 100%
+            );
+            animation: bendLightNext 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            opacity: 0.8;
+        }
+
+        .flipping-prev .page-flip-front .page-bend-overlay {
+            animation: bendLightPrev 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes bendLightNext {
+            0% {
+                background-position: 100% 0;
+                opacity: 0.3;
+            }
+            30% {
+                background-position: 70% 0;
+                opacity: 0.8;
+            }
+            50% {
+                background-position: 50% 0;
+                opacity: 1;
+            }
+            70% {
+                background-position: 30% 0;
+                opacity: 0.8;
+            }
+            100% {
+                background-position: 0% 0;
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes bendLightPrev {
+            0% {
+                background-position: 0% 0;
+                opacity: 0.3;
+            }
+            30% {
+                background-position: 30% 0;
+                opacity: 0.8;
+            }
+            50% {
+                background-position: 50% 0;
+                opacity: 1;
+            }
+            70% {
+                background-position: 70% 0;
+                opacity: 0.8;
+            }
+            100% {
+                background-position: 100% 0;
+                opacity: 0.3;
+            }
+        }
+
+        /* 书页边缘阴影 - 模拟厚度和弯曲 */
+        .page-edge-shadow {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 100%;
+            pointer-events: none;
+            z-index: 6;
+            background: linear-gradient(to left,
+                rgba(0,0,0,0.15) 0%,
+                rgba(0,0,0,0.05) 40%,
+                transparent 100%);
+            border-radius: 0 24px 24px 0;
+            animation: edgeShadowNext 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        .flipping-prev .page-edge-shadow {
+            left: 0;
+            right: auto;
+            background: linear-gradient(to right,
+                rgba(0,0,0,0.15) 0%,
+                rgba(0,0,0,0.05) 40%,
+                transparent 100%);
+            border-radius: 24px 0 0 24px;
+            animation: edgeShadowPrev 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes edgeShadowNext {
+            0%, 100% { opacity: 0.4; width: 20px; }
+            50% { opacity: 1; width: 35px; }
+        }
+
+        @keyframes edgeShadowPrev {
+            0%, 100% { opacity: 0.4; width: 20px; }
+            50% { opacity: 1; width: 35px; }
+        }
+
+        /* 书页阴影层 - 落在下面的阴影 */
+        .page-shadow {
+            position: absolute;
+            bottom: -10px;
+            left: 5%;
+            width: 90%;
+            height: 20px;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+            animation: pageShadowMove 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes pageShadowMove {
+            0% {
+                opacity: 0.3;
+                transform: scaleX(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scaleX(0.7);
+            }
+            100% {
+                opacity: 0.3;
+                transform: scaleX(1);
+            }
+        }
+
+        /* 背面的弯曲光影 */
+        .page-flip-back .page-bend-overlay {
+            background: linear-gradient(
+                80deg,
+                rgba(0,0,0,0) 0%,
+                rgba(0,0,0,0.08) 40%,
+                rgba(255,255,255,0.05) 50%,
+                rgba(0,0,0,0.04) 60%,
+                rgba(0,0,0,0) 100%
+            );
+            opacity: 0.7;
+        }
+
+        /* 书脊效果 */
+        .book-spine {
+            position: absolute;
+            left: 60px;
+            top: 0;
+            bottom: 0;
+            width: 12px;
+            background: linear-gradient(to right,
+                rgba(0, 0, 0, 0.15) 0%,
+                rgba(0, 0, 0, 0.05) 40%,
+                rgba(0, 0, 0, 0.02) 70%,
+                transparent 100%);
+            z-index: 50;
+            pointer-events: none;
+            border-radius: 24px 0 0 24px;
+        }
+
+        /* 底层页面预览（翻页时露出的下一页） */
+        .page-underlay {
+            position: absolute;
+            top: 0;
+            left: 60px;
+            right: 60px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            z-index: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .page-underlay.visible {
+            opacity: 1;
+            animation: underlayFadeIn 1s ease-out forwards;
+        }
+
+        .page-underlay .underlay-content {
+            animation: underlayContentFadeIn 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+
+        @keyframes underlayFadeIn {
+            0% { opacity: 0.2; }
+            25% { opacity: 0.4; }
+            50% { opacity: 0.6; }
+            75% { opacity: 0.85; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes underlayContentFadeIn {
+            0% { opacity: 0; }
+            30% { opacity: 0.2; }
+            60% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* 底部固定翻页导航 */
+        .page-navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+            display: none;
+            justify-content: center;
+            padding: 8px 20px;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .page-nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            pointer-events: auto;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .page-number {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .nav-btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .nav-btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            backdrop-filter: blur(5px);
+        }
+
+        .nav-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .loader::before,
+        .loader::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .loader::before {
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-top-color: var(--accent);
+            animation: loaderSpin 1s linear infinite;
+        }
+
+        .loader::after {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            border: 3px solid transparent;
+            border-top-color: var(--warm);
+            animation: loaderSpin 0.8s linear infinite reverse;
+        }
+
+        @keyframes loaderSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .reader-layout {
+                flex-direction: column;
+                max-width: 800px;
+            }
+            
+            .notes-sidebar {
+                position: static;
+                max-height: none;
+                order: -1;
+            }
+            
+            .notes-divider {
+                display: none;
+            }
+            
+            .chapter-reader {
+                flex: 1;
+                max-width: 100%;
+            }
+            
+            .notes-editor {
+                min-height: 200px;
+            }
+            
+            .notes-textarea {
+                min-height: 180px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 24px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .section {
+                padding: 80px 24px;
+            }
+            
+            .hero-cta {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .chapters-list {
+                padding: 0 24px 60px;
+            }
+
+            .chapter-content {
+                padding: 24px;
+                padding-bottom: 100px;
+            }
+            
+            .chapter-reader {
+                padding: 0 24px 60px;
+            }
+            
+            .reader-layout {
+                padding: 0 16px 40px;
+            }
+            
+            .page-flip-layer {
+                left: 24px;
+                right: 24px;
+            }
+            
+            .page-underlay {
+                left: 24px;
+                right: 24px;
+            }
+            
+            .book-spine {
+                left: 24px;
+            }
+            
+            .page-navigation {
+                padding: 8px 16px;
+            }
+            
+            .page-nav-inner {
+                padding: 8px 16px;
+                gap: 8px;
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(0, 0, 0, 0.2);
+            }
+            
+            .page-number {
+                font-size: 0.75rem;
+            }
+            
+            .notes-toolbar {
+                gap: 6px;
+                padding: 10px 12px;
+            }
+            
+            .notes-toolbar-group {
+                padding: 3px 6px;
+            }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-state span {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        /* 多媒体展示 */
+        .media-showcase {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .media-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .media-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 60px var(--shadow-color), 0 0 60px var(--accent-glow);
+        }
+
+        .media-thumb {
+            aspect-ratio: 16 / 9;
+            background: rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-thumb iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .media-info {
+            padding: 24px;
+        }
+
+        .media-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .media-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .media-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loader">
+        <div class="loader"></div>
+    </div>
+
+    <!-- 背景装饰 -->
+    <div class="bg-decoration"></div>
+    
+    <!-- 浮动符号 -->
+    <div class="math-symbols">
+        <span class="math-symbol">∑</span>
+        <span class="math-symbol">∫</span>
+        <span class="math-symbol">π</span>
+        <span class="math-symbol">∞</span>
+        <span class="math-symbol">∂</span>
+        <span class="math-symbol">√</span>
+        <span class="math-symbol">Δ</span>
+        <span class="math-symbol">θ</span>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a class="logo" onclick="showHomePage()">
+            <div class="logo-icon" id="siteLogoIcon">📚</div>
+            <span id="siteName">Textbook Platform</span>
+        </a>
+        <div class="nav-actions">
+            <button class="nav-icon-btn" onclick="showHomePage()" title="Home">
+                <span>🏠</span>
+            </button>
+            <button class="theme-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle Theme">
+                <span id="themeIcon">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 首页 -->
+    <div id="homePage">
+        <section class="hero" id="heroSection">
+            <div class="hero-badge" id="heroBadge">Next-Generation Interactive Learning</div>
+            <h1 id="heroTitle">Explore the Universe of Knowledge</h1>
+            <p class="hero-subtitle" id="heroSubtitle">
+                Learning becomes intuitive and fun through beautiful visualizations, dynamic demonstrations, and interactive exercises
+            </p>
+            <div class="hero-cta">
+                <a href="#topics" class="btn btn-primary">
+                    Start Learning
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="scroll-indicator">Scroll Down</div>
+        </section>
+
+        <!-- 科目列表 -->
+        <section class="section" id="topics">
+            <div class="section-header">
+                <span class="section-label" id="sectionLabel">Subjects</span>
+                <h2 class="section-title" id="sectionTitle">Choose Your Learning Path</h2>
+                <p class="section-desc" id="sectionDesc">Explore rich knowledge across multiple subject areas</p>
+            </div>
+            <div class="topics-grid" id="subjectsGrid">
+                <!-- 动态加载 -->
+            </div>
+        </section>
+
+        <!-- 多媒体展示 -->
+        <section class="section" id="multimedia" style="background: rgba(255,255,255,0.02);">
+            <div class="section-header">
+                <span class="section-label">Multimedia Gallery</span>
+                <h2 class="section-title">Explore Through Media</h2>
+                <p class="section-desc">Images, videos, and audio to enhance your learning experience</p>
+            </div>
+            <div class="media-showcase" id="mediaShowcase">
+                <!-- 动态加载 -->
+            </div>
+        </section>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon" id="footerLogo" style="width:32px;height:32px;font-size:1rem;overflow:hidden;">📚</div>
+                    <span id="footerSiteName">Textbook Platform</span>
+                </div>
+                <p class="footer-copy" id="footerCopyright">© 2026 Interactive Textbook Platform</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 科目详情页 -->
+    <div class="subject-page" id="subjectPage">
+        <div class="subject-header">
+            <button class="back-btn" onclick="goBackToHome()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span>Back</span>
+            </button>
+            <div class="subject-icon" id="subjectIcon"></div>
+            <h1 class="subject-title" id="subjectTitle"></h1>
+            <p class="subject-desc" id="subjectDesc"></p>
+        </div>
+        <div class="chapters-list" id="chaptersList">
+            <!-- 动态加载 -->
+        </div>
+        <!-- 页脚 -->
+        <footer class="footer" style="position: relative; margin-top: 40px;">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon" id="footerLogoSubject" style="width:32px;height:32px;font-size:1rem;overflow:hidden;">📚</div>
+                    <span id="footerSiteNameSubject">Textbook Platform</span>
+                </div>
+                <p class="footer-copy" id="footerCopyrightSubject">© 2026 Interactive Textbook Platform</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 章节详情页 -->
+    <div class="chapter-page" id="chapterPage">
+        <div class="chapter-page-bg" id="chapterPageBg"></div>
+        <div class="chapter-header">
+            <div class="chapter-toolbar">
+                <button class="toolbar-btn" onclick="goBackToSubject()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Back</span>
+                </button>
+                
+                <div class="toolbar-center">
+                    <h1 class="chapter-title" id="chapterTitle"></h1>
+                </div>
+                
+                <div class="toolbar-right">
+                    <div class="dropdown" id="fontSettingsDropdown">
+                        <button class="toolbar-btn dropdown-toggle" onclick="toggleFontSettingsDropdown()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="4 7 4 4 20 4 20 7"/>
+                                <line x1="9" y1="20" x2="15" y2="20"/>
+                                <line x1="12" y1="4" x2="12" y2="20"/>
+                            </svg>
+                            <span>Font</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu font-settings-menu" id="fontSettingsMenu">
+                            <div class="font-settings-section">
+                                <div class="font-settings-label">Adjust</div>
+                                <select class="font-select" id="fontTargetSelect" onchange="onFontTargetChange()">
+                                    <option value="body">Body Text</option>
+                                    <option value="headings">Headings</option>
+                                    <option value="hero">Hero Title</option>
+                                    <option value="buttons">Buttons</option>
+                                </select>
+                            </div>
+                            <div class="font-settings-section">
+                                <div class="font-settings-label">Font Family</div>
+                                <select class="font-select" id="fontFamilySelect" onchange="applyFontSetting()">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Garamond">Garamond</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Trebuchet MS">Trebuchet MS</option>
+                                </select>
+                            </div>
+                            <div class="font-settings-section">
+                                <div class="font-settings-label">
+                                    <span>Size</span>
+                                    <span class="font-size-value" id="fontSizeValue">100%</span>
+                                </div>
+                                <div class="font-size-slider-row">
+                                    <button class="font-size-mini-btn" onclick="decreaseCustomFontSize()">A-</button>
+                                    <input type="range" class="font-size-slider" id="fontSizeSlider" min="70" max="150" step="10" value="100" oninput="onFontSizeSliderChange()">
+                                    <button class="font-size-mini-btn" onclick="increaseCustomFontSize()">A+</button>
+                                </div>
+                            </div>
+                            <div class="font-settings-section">
+                                <div class="font-settings-label">Weight</div>
+                                <div class="font-weight-buttons">
+                                    <button class="weight-btn" data-weight="300" onclick="setFontWeight('300')">Light</button>
+                                    <button class="weight-btn active" data-weight="400" onclick="setFontWeight('400')">Regular</button>
+                                    <button class="weight-btn" data-weight="600" onclick="setFontWeight('600')">Semi</button>
+                                    <button class="weight-btn" data-weight="700" onclick="setFontWeight('700')">Bold</button>
+                                </div>
+                            </div>
+                            <div class="font-settings-section font-reset-section">
+                                <button class="toolbar-btn reset-btn" onclick="resetFontSettings()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                        <path d="M3 3v5h5"/>
+                                    </svg>
+                                    <span>Reset</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown" id="exportDropdown">
+                        <button class="toolbar-btn dropdown-toggle" onclick="toggleExportDropdown()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>Export</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="exportMenu">
+                            <div class="dropdown-item" onclick="exportPDF('content'); document.getElementById('exportMenu').classList.remove('show');">
+                                <span>Content Only</span>
+                            </div>
+                            <div class="dropdown-item" onclick="exportPDF('with-notes'); document.getElementById('exportMenu').classList.remove('show');">
+                                <span>With Notes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown" id="pageEffectDropdown">
+                        <button class="toolbar-btn dropdown-toggle" onclick="togglePageEffectDropdown()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                            </svg>
+                            <span>Page Effect</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="pageEffectMenu">
+                            <div class="dropdown-item" onclick="setPageEffect('slide')">
+                                <span>Slide</span>
+                            </div>
+                            <div class="dropdown-item" onclick="setPageEffect('fade')">
+                                <span>Fade</span>
+                            </div>
+                            <div class="dropdown-item" onclick="setPageEffect('flip')">
+                                <span>Book Flip</span>
+                            </div>
+                            <div class="dropdown-item" onclick="setPageEffect('real-flip')">
+                                <span>Real Page Flip</span>
+                            </div>
+                            <div class="dropdown-item" onclick="setPageEffect('none')">
+                                <span>None</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chapter-formula" id="chapterFormula"></div>
+        </div>
+        <div class="reader-layout" id="readerLayout">
+            <div class="chapter-reader" id="chapterReader">
+                <div class="chapter-content" id="chapterContent">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
+            <div class="notes-divider"></div>
+            <div class="notes-sidebar" id="notesSidebar">
+                <div class="notes-header">
+                    <div class="notes-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        Notes
+                    </div>
+                    <div class="notes-save-status" id="notesSaveStatus">Auto-saved</div>
+                </div>
+                <div class="notes-toolbar">
+                    <div class="notes-toolbar-group">
+                        <label>Font</label>
+                        <select id="notesFontFamily" onchange="updateNotesFont()">
+                            <option value="Inter">Inter</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Arial">Arial</option>
+                        </select>
+                    </div>
+                    <div class="notes-toolbar-group">
+                        <label>Size</label>
+                        <input type="number" id="notesFontSize" value="14" min="10" max="24" step="1" onchange="updateNotesFont()" style="width: 50px;">
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">px</span>
+                    </div>
+                    <div class="notes-toolbar-group">
+                        <label>Color</label>
+                        <input type="color" id="notesFontColor" value="#4A3728" onchange="updateNotesFont()">
+                    </div>
+                    <div class="notes-toolbar-group">
+                        <button onclick="clearNotes()" style="background: transparent; border: 1px solid var(--border-light); border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; color: var(--text); cursor: pointer;">Clear</button>
+                    </div>
+                </div>
+                <div class="notes-editor">
+                    <textarea 
+                        class="notes-textarea" 
+                        id="notesTextarea" 
+                        placeholder="Write your notes here...&#10;&#10;Your notes are automatically saved for this chapter."
+                        oninput="onNotesInput()"
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+        <!-- 页脚 -->
+        <footer class="footer" style="position: relative; margin-top: 40px;">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon" id="footerLogoChapter" style="width:32px;height:32px;font-size:1rem;overflow:hidden;">📚</div>
+                    <span id="footerSiteNameChapter">Textbook Platform</span>
+                </div>
+                <p class="footer-copy" id="footerCopyrightChapter">© 2026 Interactive Textbook Platform</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentSubjectId = null;
+        let subjects = [];
+        let siteSettings = {};
+        let chaptersList = [];
+        let currentChapterIndex = 0;
+        let isPageFlipping = false;
+        const FLIP_DURATION = 1000;
+        let currentPage = 'home';
+        
+        // 子页面（断页线分页）相关变量
+        let subPages = [];
+        let currentSubPage = 0;
+        
+        // 笔记相关变量
+        let currentChapterId = null;
+        let notesSaveTimer = null;
+        const NOTES_STORAGE_KEY = 'textbook_notes';
+        const NOTES_SETTINGS_KEY = 'textbook_notes_settings';
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 隐藏加载动画
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 500);
+
+            // 加载用户的主题偏好
+            loadThemePreference();
+            
+            // 加载网站设置
+            await loadSettings();
+            
+            // 加载科目数据
+            await loadSubjects();
+            
+            // 加载多媒体数据
+            await loadMultimedia();
+            
+            // 初始化交互控制
+            if (typeof initControls === 'function') initControls();
+            
+            // 初始化滚动动画观察器
+            initScrollAnimations();
+            
+            // 初始化翻页效果选择器
+            initPageTurnSelector();
+            
+            // 初始化字体大小
+            initFontSize();
+            
+            // 加载用户字体设置
+            loadFontSettings();
+            
+            // 初始化笔记设置
+            initNotesSettings();
+            
+            // 恢复阅读位置（等待数据加载完成后立即恢复）
+            restoreReadingPosition();
+        });
+        
+        // ==================== 阅读位置保存/恢复 ====================
+        
+        const READING_POSITION_KEY = 'textbook_reading_position';
+        
+        // 保存阅读位置
+        function saveReadingPosition() {
+            const position = {
+                subjectId: currentSubjectId,
+                chapterIndex: currentChapterIndex,
+                subPage: currentSubPage,
+                page: currentPage
+            };
+            localStorage.setItem(READING_POSITION_KEY, JSON.stringify(position));
+        }
+        
+        // 恢复阅读位置（同步版本，直接操作 DOM）
+        function restoreReadingPosition() {
+            const saved = localStorage.getItem(READING_POSITION_KEY);
+            if (!saved) return;
+            
+            try {
+                const position = JSON.parse(saved);
+                console.log('[恢复] 读取到数据:', position);
+                
+                // 等待 subjects 加载
+                const checkAndRestore = () => {
+                    if (subjects.length === 0) {
+                        setTimeout(checkAndRestore, 50);
+                        return;
+                    }
+                    
+                    // 等待 chaptersList 加载（showSubject 执行后）
+                    const doRestore = () => {
+                        if (position.page === 'chapter' && position.subjectId) {
+                            // 恢复章节页面
+                            const subject = subjects.find(s => s.id == position.subjectId);
+                            if (subject) {
+                                showSubject(position.subjectId).then(() => {
+                                    if (position.chapterIndex !== undefined && chaptersList.length > 0) {
+                                        const idx = Math.min(position.chapterIndex, chaptersList.length - 1);
+                                        if (chaptersList[idx]) {
+                                            showChapter(chaptersList[idx].id, idx);
+                                            if (position.subPage > 0) {
+                                                showSubPage(position.subPage);
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        } else if (position.page === 'subject' && position.subjectId) {
+                            // 恢复科目页面
+                            const subject = subjects.find(s => s.id == position.subjectId);
+                            if (subject) {
+                                showSubject(position.subjectId);
+                            }
+                        }
+                    };
+                    
+                    doRestore();
+                };
+                
+                checkAndRestore();
+            } catch (e) {
+                console.error('[恢复] 错误:', e);
+            }
+        }
+        
+        // 滚动动画观察器
+        function initScrollAnimations() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            
+            // 观察需要动画的元素
+            document.querySelectorAll('.topic-card, .media-card, .section-header, .demo-container > div').forEach(el => {
+                el.classList.add('fade-in');
+                observer.observe(el);
+            });
+        }
+
+        // 加载网站设置
+        async function loadSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/settings`);
+                const settings = await res.json();
+                siteSettings = settings;
+                
+                // 基本设置
+                const siteNameEl = document.getElementById('siteName');
+                if (siteNameEl) siteNameEl.textContent = settings.siteName || 'Interactive Textbook Platform';
+                
+                // Site Logo - 支持图片或emoji
+                const siteLogoEl = document.getElementById('siteLogoIcon');
+                if (siteLogoEl) {
+                    if (settings.siteLogoImage && settings.siteLogoImage.trim()) {
+                        siteLogoEl.innerHTML = `<img src="${settings.siteLogoImage}" alt="Logo">`;
+                        siteLogoEl.classList.add('has-image');
+                    } else {
+                        siteLogoEl.textContent = settings.siteLogo || '📚';
+                        siteLogoEl.classList.remove('has-image');
+                    }
+                }
+                
+                // 页脚 Logo - 支持图片或emoji
+                const footerLogoEl = document.getElementById('footerLogo');
+                if (footerLogoEl) {
+                    if (settings.siteLogoImage && settings.siteLogoImage.trim()) {
+                        footerLogoEl.innerHTML = `<img src="${settings.siteLogoImage}" alt="Logo">`;
+                        footerLogoEl.classList.add('has-image');
+                    } else {
+                        footerLogoEl.textContent = settings.siteLogo || '📚';
+                        footerLogoEl.classList.remove('has-image');
+                    }
+                }
+                
+                // Subject页脚 Logo
+                const footerLogoSubjectEl = document.getElementById('footerLogoSubject');
+                if (footerLogoSubjectEl) {
+                    if (settings.siteLogoImage && settings.siteLogoImage.trim()) {
+                        footerLogoSubjectEl.innerHTML = `<img src="${settings.siteLogoImage}" alt="Logo">`;
+                        footerLogoSubjectEl.classList.add('has-image');
+                    } else {
+                        footerLogoSubjectEl.textContent = settings.siteLogo || '📚';
+                        footerLogoSubjectEl.classList.remove('has-image');
+                    }
+                }
+                const footerSiteNameSubjectEl = document.getElementById('footerSiteNameSubject');
+                if (footerSiteNameSubjectEl) footerSiteNameSubjectEl.textContent = settings.siteName || 'Interactive Textbook Platform';
+                const footerCopyrightSubjectEl = document.getElementById('footerCopyrightSubject');
+                if (footerCopyrightSubjectEl) footerCopyrightSubjectEl.textContent = settings.footerCopyright || '© 2026 Interactive Textbook Platform';
+                
+                // Chapter页脚 Logo
+                const footerLogoChapterEl = document.getElementById('footerLogoChapter');
+                if (footerLogoChapterEl) {
+                    if (settings.siteLogoImage && settings.siteLogoImage.trim()) {
+                        footerLogoChapterEl.innerHTML = `<img src="${settings.siteLogoImage}" alt="Logo">`;
+                        footerLogoChapterEl.classList.add('has-image');
+                    } else {
+                        footerLogoChapterEl.textContent = settings.siteLogo || '📚';
+                        footerLogoChapterEl.classList.remove('has-image');
+                    }
+                }
+                const footerSiteNameChapterEl = document.getElementById('footerSiteNameChapter');
+                if (footerSiteNameChapterEl) footerSiteNameChapterEl.textContent = settings.siteName || 'Interactive Textbook Platform';
+                const footerCopyrightChapterEl = document.getElementById('footerCopyrightChapter');
+                if (footerCopyrightChapterEl) footerCopyrightChapterEl.textContent = settings.footerCopyright || '© 2026 Interactive Textbook Platform';
+                
+                const footerSiteNameEl = document.getElementById('footerSiteName');
+                if (footerSiteNameEl) footerSiteNameEl.textContent = settings.siteName || 'Interactive Textbook Platform';
+                
+                document.title = settings.siteName || 'Interactive Textbook Platform';
+                
+                // Hero区域
+                const heroBadgeEl = document.getElementById('heroBadge');
+                if (heroBadgeEl) heroBadgeEl.textContent = settings.heroBadge || 'Next-Generation Interactive Learning';
+                const heroTitleEl = document.getElementById('heroTitle');
+                if (heroTitleEl) heroTitleEl.textContent = settings.heroTitle || 'Explore the Universe of Knowledge';
+                const heroSubtitleEl = document.getElementById('heroSubtitle');
+                if (heroSubtitleEl) heroSubtitleEl.textContent = settings.heroSubtitle || 'Learning becomes intuitive and fun through beautiful visualizations, dynamic demonstrations, and interactive exercises';
+                
+                // 科目区域
+                const sectionLabelEl = document.getElementById('sectionLabel');
+                if (sectionLabelEl) sectionLabelEl.textContent = settings.sectionLabel || 'Subjects';
+                const sectionTitleEl = document.getElementById('sectionTitle');
+                if (sectionTitleEl) sectionTitleEl.textContent = settings.sectionTitle || 'Choose Your Learning Path';
+                const sectionDescEl = document.getElementById('sectionDesc');
+                if (sectionDescEl) sectionDescEl.textContent = settings.sectionDesc || 'Explore rich knowledge across multiple subject areas';
+                const footerCopyrightEl = document.getElementById('footerCopyright');
+                if (footerCopyrightEl) footerCopyrightEl.textContent = settings.footerCopyright || '© 2026 Interactive Textbook Platform';
+                
+                // Interactive Demo区域
+                const demoSectionLabelEl = document.getElementById('demoSectionLabel');
+                if (demoSectionLabelEl) demoSectionLabelEl.textContent = settings.demoSectionLabel || 'Interactive Demo';
+                const demoSectionTitleEl = document.getElementById('demoSectionTitle');
+                if (demoSectionTitleEl) demoSectionTitleEl.textContent = settings.demoSectionTitle || 'Hands-on Practice';
+                const demoSectionDescEl = document.getElementById('demoSectionDesc');
+                if (demoSectionDescEl) demoSectionDescEl.textContent = settings.demoSectionDesc || 'Adjust parameters and observe how mathematical patterns change';
+                const demoTitleEl = document.getElementById('demoTitle');
+                if (demoTitleEl) demoTitleEl.textContent = settings.demoTitle || 'Function Graph Explorer';
+                const demoPanelTitleEl = document.getElementById('demoPanelTitle');
+                if (demoPanelTitleEl) demoPanelTitleEl.textContent = settings.demoPanelTitle || 'Parameter Controls';
+                
+                // 字体设置
+                const fontFamily = settings.fontFamily || 'Inter';
+                document.body.style.fontFamily = `'${fontFamily}', -apple-system, BlinkMacSystemFont, sans-serif`;
+                
+                // 字号设置
+                const fontSize = settings.fontSize || '16';
+                document.documentElement.style.fontSize = fontSize + 'px';
+                
+                // Typography settings - 各部分文字格式
+                // Hero Title
+                const heroTitle = document.getElementById('heroTitle');
+                if (heroTitle && settings.heroTitleFont) heroTitle.style.fontFamily = `'${settings.heroTitleFont}', sans-serif`;
+                if (heroTitle && settings.heroTitleSize) heroTitle.style.fontSize = settings.heroTitleSize + 'rem';
+                if (heroTitle && settings.heroTitleWeight) heroTitle.style.fontWeight = settings.heroTitleWeight;
+                
+                // Headings (section titles)
+                document.querySelectorAll('.section-title').forEach(el => {
+                    if (settings.headingFont) el.style.fontFamily = `'${settings.headingFont}', sans-serif`;
+                    if (settings.headingSize) el.style.fontSize = settings.headingSize + 'rem';
+                    if (settings.headingWeight) el.style.fontWeight = settings.headingWeight;
+                });
+                
+                // Body text
+                document.querySelectorAll('.section-desc, .hero-subtitle, .chapter-content p').forEach(el => {
+                    if (settings.bodyFont) el.style.fontFamily = `'${settings.bodyFont}', sans-serif`;
+                    if (settings.bodySize) el.style.fontSize = settings.bodySize + 'rem';
+                    if (settings.bodyWeight) el.style.fontWeight = settings.bodyWeight;
+                });
+                
+                // Buttons
+                document.querySelectorAll('.btn').forEach(el => {
+                    if (settings.buttonFont) el.style.fontFamily = `'${settings.buttonFont}', sans-serif`;
+                    if (settings.buttonSize) el.style.fontSize = settings.buttonSize + 'rem';
+                    if (settings.buttonWeight) el.style.fontWeight = settings.buttonWeight;
+                });
+                
+                // Site Name
+                const siteName = document.getElementById('siteName');
+                if (siteName && settings.siteNameFont) siteName.style.fontFamily = `'${settings.siteNameFont}', sans-serif`;
+                if (siteName && settings.siteNameSize) siteName.style.fontSize = settings.siteNameSize + 'rem';
+                if (siteName && settings.siteNameWeight) siteName.style.fontWeight = settings.siteNameWeight;
+                
+                // 黑夜模式设置
+                const themeIconEl = document.getElementById('themeIcon');
+                if (settings.darkMode === '1') {
+                    document.body.classList.add('dark-mode');
+                    if (themeIconEl) themeIconEl.textContent = '☀️';
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    if (themeIconEl) themeIconEl.textContent = '🌙';
+                }
+                
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        // 切换黑夜模式
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('themeIcon');
+            icon.textContent = isDark ? '☀️' : '🌙';
+            
+            // 保存到localStorage
+            localStorage.setItem('darkMode', isDark ? '1' : '0');
+        }
+
+        // 加载用户的主题偏好
+        function loadThemePreference() {
+            const saved = localStorage.getItem('darkMode');
+            if (saved === '1') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+        }
+
+        // 加载多媒体
+        async function loadMultimedia() {
+            try {
+                const res = await fetch(`${API_BASE}/multimedia`);
+                const items = await res.json();
+                renderMediaShowcase(items);
+            } catch (error) {
+                console.error('Failed to load multimedia:', error);
+            }
+        }
+
+        // 渲染多媒体展示
+        function renderMediaShowcase(items) {
+            const container = document.getElementById('mediaShowcase');
+            
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span>🎬</span>
+                        <p>No multimedia available yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="media-grid">
+                    ${items.map(item => `
+                        <div class="media-card">
+                            <div class="media-thumb">
+                                ${renderMediaContent(item)}
+                            </div>
+                            <div class="media-info">
+                                <h3>${item.title || 'Untitled'}</h3>
+                                <p>${item.description || ''}</p>
+                                <span class="media-type-badge">${item.type}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderMediaContent(item) {
+            if (item.type === 'image') {
+                return `<img src="${item.url}" alt="${item.title || ''}">`;
+            } else if (item.type === 'video') {
+                return `<iframe src="${item.url}" frameborder="0" allowfullscreen></iframe>`;
+            } else if (item.type === 'audio') {
+                return `
+                    <div style="display:flex;align-items:center;justify-content:center;height:100%;background:rgba(0,0,0,0.3);">
+                        <audio controls style="width: 90%;"><source src="${item.url}"></audio>
+                    </div>
+                `;
+            }
+            return '<span style="font-size: 3rem;">🎬</span>';
+        }
+
+        // 加载科目列表
+        async function loadSubjects() {
+            try {
+                subjects = await fetch(`${API_BASE}/subjects`).then(r => r.json());
+                renderSubjects();
+            } catch (error) {
+                console.error('Failed to load subjects:', error);
+                document.getElementById('subjectsGrid').innerHTML = `
+                    <div class="empty-state">
+                        <span>📚</span>
+                        <p>No subjects available</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染科目列表
+        function renderSubjects() {
+            const grid = document.getElementById('subjectsGrid');
+            
+            if (subjects.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <span>📚</span>
+                        <p>No subjects available</p>
+                        <p style="margin-top:8px;font-size:0.9rem;"><a href="/admin" style="color:var(--accent);">Click here to add subjects</a></p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = subjects.map(subject => `
+                <div class="topic-card" onclick="showSubject(${subject.id})">
+                    <div class="topic-card-inner">
+                        <div class="book-spine"></div>
+                        <div class="book-top-edge"></div>
+                        <div class="book-bottom-edge"></div>
+                        <div class="book-pages"></div>
+                        <div class="book-cover">
+                            ${subject.cover_image ? `
+                                <div class="book-cover-image" style="background-image: url('${subject.cover_image}')"></div>
+                                <div class="book-cover-overlay"></div>
+                            ` : ''}
+                            <div class="book-cover-content">
+                                <h3 class="topic-title">${subject.name}</h3>
+                                ${subject.author ? `<p class="topic-author">By ${subject.author}</p>` : ''}
+                                <p class="topic-desc">${subject.description || ''}</p>
+                                <span class="topic-count">${subject.chapter_count || 0} chapters</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 显示科目详情
+        async function showSubject(subjectId) {
+            subjectId = Number(subjectId);
+            currentSubjectId = subjectId;
+            const subject = subjects.find(s => s.id === subjectId);
+            
+            if (!subject) return;
+
+            document.getElementById('subjectIcon').textContent = subject.icon || '📚';
+            document.getElementById('subjectTitle').textContent = subject.name;
+            document.getElementById('subjectDesc').textContent = subject.description || '';
+
+            // 加载章节列表
+            try {
+                chaptersList = await fetch(`${API_BASE}/chapters?subject_id=${subjectId}`).then(r => r.json());
+                renderChapters(chaptersList);
+            } catch (error) {
+                document.getElementById('chaptersList').innerHTML = '<div class="empty-state"><span>📖</span><p>Failed to load chapters</p></div>';
+            }
+
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('subjectPage').style.display = 'block';
+            document.getElementById('chapterPage').style.display = 'none';
+            window.scrollTo(0, 0);
+            currentChapterIndex = 0;
+            currentSubPage = 0;
+            currentPage = 'subject';
+            saveReadingPosition();
+        }
+
+        // 渲染章节列表
+        function renderChapters(chapters) {
+            const list = document.getElementById('chaptersList');
+            
+            if (chapters.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <span>📖</span>
+                        <p>No chapters available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = chapters.map((chapter, index) => `
+                <div class="chapter-item" onclick="showChapter(${chapter.id}, ${index})">
+                    <div class="chapter-info">
+                        <h3>${chapter.title}</h3>
+                        <p>Click to view details</p>
+                    </div>
+                    <span class="chapter-arrow">→</span>
+                </div>
+            `).join('');
+        }
+
+        // 显示章节详情
+        async function showChapter(chapterId, index = 0, direction = 'next') {
+            if (isPageFlipping) return;
+            
+            try {
+                const effect = getUserPageTurnEffect();
+                const contentEl = document.getElementById('chapterContent');
+                const chapterPageVisible = document.getElementById('chapterPage').style.display !== 'none';
+                
+                // 只有在真实翻页模式且章节页已显示时才用特殊翻页逻辑
+                if (effect === 'real-flip' && chapterPageVisible) {
+                    isPageFlipping = true;
+                    
+                    // 先异步加载新章节数据
+                    const chapter = await fetch(`${API_BASE}/chapters/${chapterId}`).then(r => r.json());
+                    
+                    // 创建底层页面（下一页内容）
+                    const underlay = createUnderlay(contentEl, chapter.content);
+                    
+                    // 创建翻页层（当前页内容，会翻转过去）
+                    const flipLayer = createFlipLayer(contentEl, direction);
+                    
+                    // 更新标题和公式
+                    document.getElementById('chapterTitle').textContent = chapter.title;
+                    
+                    const formulaEl = document.getElementById('chapterFormula');
+                    if (chapter.formula && typeof katex !== 'undefined') {
+                        try {
+                            katex.render(chapter.formula, formulaEl, { throwOnError: false });
+                            formulaEl.style.display = 'inline-block';
+                        } catch (e) {
+                            formulaEl.textContent = chapter.formula;
+                        }
+                    } else {
+                        formulaEl.style.display = 'none';
+                    }
+                    
+                    // 动画结束后替换内容并清理
+                    setTimeout(() => {
+                        subPages = parseContentIntoPages(chapter.content);
+                        currentSubPage = 0;
+                        contentEl.innerHTML = subPages[0] || '<p>No content available</p>';
+                        currentChapterIndex = index;
+                        addPageNavigation();
+                        applyFontSize();
+                        renderContentFormulas();
+                        loadChapterNotes(chapterId);
+                        updateSubPageNavigation();
+
+                        // 设置封面背景
+                        const bgEl = document.getElementById('chapterPageBg');
+                        const subject = subjects.find(s => s.id === currentSubjectId);
+                        if (subject && subject.cover_image) {
+                            bgEl.style.backgroundImage = `url('${subject.cover_image}')`;
+                            bgEl.style.opacity = '0.12';
+                        } else {
+                            bgEl.style.backgroundImage = 'none';
+                            bgEl.style.opacity = '0';
+                        }
+
+                        // 清理
+                        if (flipLayer && flipLayer.parentNode) {
+                            flipLayer.parentNode.removeChild(flipLayer);
+                        }
+                        if (underlay && underlay.parentNode) {
+                            underlay.parentNode.removeChild(underlay);
+                        }
+                        
+                        isPageFlipping = false;
+                        currentPage = 'chapter';
+                        saveReadingPosition();
+                    }, FLIP_DURATION);
+                    
+                    return;
+                }
+                
+                // 非真实翻页模式：正常加载
+                const chapter = await fetch(`${API_BASE}/chapters/${chapterId}`).then(r => r.json());
+                currentChapterIndex = index;
+                
+                document.getElementById('chapterTitle').textContent = chapter.title;
+                
+                // 渲染公式
+                const formulaEl = document.getElementById('chapterFormula');
+                if (chapter.formula && typeof katex !== 'undefined') {
+                    try {
+                        katex.render(chapter.formula, formulaEl, { throwOnError: false });
+                        formulaEl.style.display = 'inline-block';
+                    } catch (e) {
+                        formulaEl.textContent = chapter.formula;
+                    }
+                } else {
+                    formulaEl.style.display = 'none';
+                }
+                
+                // 渲染内容 - 解析断页线
+                subPages = parseContentIntoPages(chapter.content);
+                currentSubPage = 0;
+                contentEl.innerHTML = subPages[0] || '<p>No content available</p>';
+                
+                // 添加翻页导航
+                addPageNavigation();
+                applyFontSize();
+                renderContentFormulas();
+                loadChapterNotes(chapterId);
+                updateSubPageNavigation();
+                
+                document.getElementById('homePage').style.display = 'none';
+                document.getElementById('subjectPage').style.display = 'none';
+                document.getElementById('chapterPage').style.display = 'block';
+                window.scrollTo(0, 0);
+
+                // 设置封面背景
+                const bgEl = document.getElementById('chapterPageBg');
+                const subject = subjects.find(s => s.id === currentSubjectId);
+                if (subject && subject.cover_image) {
+                    bgEl.style.backgroundImage = `url('${subject.cover_image}')`;
+                    bgEl.style.opacity = '0.12';
+                } else {
+                    bgEl.style.backgroundImage = 'none';
+                    bgEl.style.opacity = '0';
+                }
+
+                // 应用翻页效果（必须在页面显示后调用）
+                requestAnimationFrame(() => {
+                    applyPageTurnEffect();
+                });
+                
+                // 显示底部导航
+                const nav = document.getElementById('pageNavigation');
+                if (nav) nav.style.display = 'flex';
+                
+                currentPage = 'chapter';
+                saveReadingPosition();
+            } catch (error) {
+                console.error('Failed to load chapter:', error);
+                isPageFlipping = false;
+            }
+        }
+        
+        // 创建底层页面（翻页时露出的下一页）
+        function createUnderlay(contentEl, contentHtml) {
+            const reader = document.getElementById('chapterReader');
+            
+            const underlay = document.createElement('div');
+            underlay.className = 'page-underlay';
+            
+            // 解析断页线，取第一页
+            const pages = parseContentIntoPages(contentHtml);
+            const firstPageContent = pages[0] || '<p>No content available</p>';
+            
+            // 克隆内容样式
+            const clone = contentEl.cloneNode(false);
+            clone.innerHTML = firstPageContent;
+            clone.className += ' underlay-content';
+            clone.style.margin = '0';
+            clone.style.maxWidth = 'none';
+            clone.style.border = 'none';
+            clone.style.background = 'transparent';
+            clone.style.backdropFilter = 'none';
+            clone.style.webkitBackdropFilter = 'none';
+            clone.style.padding = '60px';
+            
+            underlay.appendChild(clone);
+            
+            // 设置尺寸和位置
+            const rect = contentEl.getBoundingClientRect();
+            const readerRect = reader.getBoundingClientRect();
+            underlay.style.height = rect.height + 'px';
+            underlay.style.top = (rect.top - readerRect.top) + 'px';
+            
+            reader.appendChild(underlay);
+            
+            // 触发动画
+            requestAnimationFrame(() => {
+                underlay.classList.add('visible');
+            });
+            
+            return underlay;
+        }
+        
+        // 获取用户选择的翻页效果
+        function getUserPageTurnEffect() {
+            return localStorage.getItem('pageTurnEffect') || siteSettings.pageTurnEffect || 'slide';
+        }
+        
+        // 设置用户翻页效果
+        function setUserPageTurnEffect(effect) {
+            localStorage.setItem('pageTurnEffect', effect);
+            const selectEl = document.getElementById('userPageTurnEffect');
+            if (selectEl) selectEl.value = effect;
+        }
+        
+        // 用户切换翻页效果
+        function onPageTurnEffectChange(effect) {
+            setUserPageTurnEffect(effect);
+        }
+        
+        // 切换翻页效果下拉菜单
+        function togglePageEffectDropdown() {
+            const menu = document.getElementById('pageEffectMenu');
+            menu.classList.toggle('show');
+            updatePageEffectActive();
+        }
+        
+        // 设置翻页效果
+        function setPageEffect(effect) {
+            setUserPageTurnEffect(effect);
+            document.getElementById('pageEffectMenu').classList.remove('show');
+            updatePageEffectActive();
+        }
+        
+        // 更新下拉菜单选中状态
+        function updatePageEffectActive() {
+            const effect = getUserPageTurnEffect();
+            const items = document.querySelectorAll('#pageEffectMenu .dropdown-item');
+            const effectNames = {
+                'slide': 'Slide',
+                'fade': 'Fade',
+                'flip': 'Book Flip',
+                'real-flip': 'Real Page Flip',
+                'none': 'None'
+            };
+            items.forEach(item => {
+                const text = item.querySelector('span').textContent;
+                if (effectNames[effect] === text) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        // 初始化用户翻页效果选择器
+        function initPageTurnSelector() {
+            const effect = getUserPageTurnEffect();
+            const selectEl = document.getElementById('userPageTurnEffect');
+            if (selectEl) selectEl.value = effect;
+            updatePageEffectActive();
+            
+            // 点击外部关闭下拉菜单
+            document.addEventListener('click', function(e) {
+                const pageEffectDropdown = document.getElementById('pageEffectDropdown');
+                const pageEffectMenu = document.getElementById('pageEffectMenu');
+                if (pageEffectDropdown && !pageEffectDropdown.contains(e.target)) {
+                    pageEffectMenu.classList.remove('show');
+                }
+                
+                const exportDropdown = document.getElementById('exportDropdown');
+                const exportMenu = document.getElementById('exportMenu');
+                if (exportDropdown && !exportDropdown.contains(e.target)) {
+                    exportMenu.classList.remove('show');
+                }
+            });
+        }
+        
+        // 字体大小控制
+        let currentFontScale = 100;
+        const MIN_FONT_SCALE = 70;
+        const MAX_FONT_SCALE = 150;
+        const FONT_STEP = 10;
+        
+        function increaseFontSize() {
+            if (currentFontScale < MAX_FONT_SCALE) {
+                currentFontScale += FONT_STEP;
+                applyFontSize();
+            }
+        }
+        
+        function decreaseFontSize() {
+            if (currentFontScale > MIN_FONT_SCALE) {
+                currentFontScale -= FONT_STEP;
+                applyFontSize();
+            }
+        }
+        
+        function applyFontSize() {
+            const content = document.getElementById('chapterContent');
+            if (content) {
+                content.style.fontSize = (1.1 * currentFontScale / 100) + 'rem';
+            }
+            const label = document.getElementById('fontSizeLabel');
+            if (label) {
+                label.textContent = currentFontScale + '%';
+            }
+            localStorage.setItem('fontScale', currentFontScale);
+        }
+
+        function renderContentFormulas() {
+            const content = document.getElementById('chapterContent');
+            if (!content || typeof katex === 'undefined') return;
+            
+            const formulaElements = content.querySelectorAll('[data-formula]');
+            formulaElements.forEach(el => {
+                const formula = el.getAttribute('data-formula');
+                if (formula) {
+                    try {
+                        katex.render(formula, el, { throwOnError: false });
+                    } catch (e) {
+                        el.textContent = formula;
+                    }
+                }
+            });
+        }
+        
+        function initFontSize() {
+            const saved = localStorage.getItem('fontScale');
+            if (saved) {
+                currentFontScale = parseInt(saved);
+            }
+            applyFontSize();
+        }
+
+        let currentFontTarget = 'body';
+        const fontSettings = {
+            body: { family: '', size: 100, weight: '400' },
+            headings: { family: '', size: 100, weight: '700' },
+            hero: { family: '', size: 100, weight: '900' },
+            buttons: { family: '', size: 100, weight: '500' }
+        };
+
+        function toggleFontSettingsDropdown() {
+            const menu = document.getElementById('fontSettingsMenu');
+            const pageEffectMenu = document.getElementById('pageEffectMenu');
+            if (pageEffectMenu) pageEffectMenu.classList.remove('show');
+            menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            const fontDropdown = document.getElementById('fontSettingsDropdown');
+            const pageEffectDropdown = document.getElementById('pageEffectDropdown');
+            const fontMenu = document.getElementById('fontSettingsMenu');
+            const pageEffectMenu = document.getElementById('pageEffectMenu');
+            
+            if (fontDropdown && !fontDropdown.contains(e.target) && fontMenu) {
+                fontMenu.classList.remove('show');
+            }
+            if (pageEffectDropdown && !pageEffectDropdown.contains(e.target) && pageEffectMenu) {
+                pageEffectMenu.classList.remove('show');
+            }
+        });
+
+        function onFontTargetChange() {
+            const select = document.getElementById('fontTargetSelect');
+            currentFontTarget = select.value;
+            updateFontSettingsUI();
+        }
+
+        function updateFontSettingsUI() {
+            const settings = fontSettings[currentFontTarget];
+            
+            const familySelect = document.getElementById('fontFamilySelect');
+            if (familySelect && settings.family) {
+                familySelect.value = settings.family;
+            }
+            
+            const sizeSlider = document.getElementById('fontSizeSlider');
+            const sizeValue = document.getElementById('fontSizeValue');
+            if (sizeSlider && sizeValue) {
+                sizeSlider.value = settings.size;
+                sizeValue.textContent = settings.size + '%';
+            }
+            
+            document.querySelectorAll('.weight-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.weight === settings.weight);
+            });
+        }
+
+        function applyFontSetting() {
+            const settings = fontSettings[currentFontTarget];
+            const familySelect = document.getElementById('fontFamilySelect');
+            
+            if (familySelect) {
+                settings.family = familySelect.value;
+            }
+            
+            applyFontStyles();
+            saveFontSettings();
+        }
+
+        function onFontSizeSliderChange() {
+            const slider = document.getElementById('fontSizeSlider');
+            const valueDisplay = document.getElementById('fontSizeValue');
+            if (slider && valueDisplay) {
+                const value = parseInt(slider.value);
+                valueDisplay.textContent = value + '%';
+                fontSettings[currentFontTarget].size = value;
+                applyFontStyles();
+                saveFontSettings();
+            }
+        }
+
+        function increaseCustomFontSize() {
+            const slider = document.getElementById('fontSizeSlider');
+            if (slider && parseInt(slider.value) < 150) {
+                slider.value = parseInt(slider.value) + 10;
+                onFontSizeSliderChange();
+            }
+        }
+
+        function decreaseCustomFontSize() {
+            const slider = document.getElementById('fontSizeSlider');
+            if (slider && parseInt(slider.value) > 70) {
+                slider.value = parseInt(slider.value) - 10;
+                onFontSizeSliderChange();
+            }
+        }
+
+        function setFontWeight(weight) {
+            fontSettings[currentFontTarget].weight = weight;
+            
+            document.querySelectorAll('.weight-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.weight === weight);
+            });
+            
+            applyFontStyles();
+            saveFontSettings();
+        }
+
+        function applyFontStyles() {
+            const settings = fontSettings[currentFontTarget];
+            
+            let elements = [];
+            switch(currentFontTarget) {
+                case 'body':
+                    elements = document.querySelectorAll('.section-desc, .hero-subtitle, .chapter-content p, .chapter-content li, .chapter-content span:not(.katex *)');
+                    break;
+                case 'headings':
+                    elements = document.querySelectorAll('.section-title, .chapter-content h2, .chapter-content h3, .chapter-title, .logo');
+                    break;
+                case 'hero':
+                    const hero = document.getElementById('heroTitle');
+                    if (hero) elements = [hero];
+                    break;
+                case 'buttons':
+                    elements = document.querySelectorAll('.btn, .toolbar-btn, .nav-icon-btn');
+                    break;
+            }
+            
+            elements.forEach(el => {
+                if (settings.family) {
+                    el.style.fontFamily = `'${settings.family}', sans-serif`;
+                }
+                if (settings.size) {
+                    const baseSize = parseFloat(getComputedStyle(el).fontSize);
+                    el.style.fontSize = (baseSize * settings.size / 100) + 'px';
+                }
+                if (settings.weight) {
+                    el.style.fontWeight = settings.weight;
+                }
+            });
+
+            if (currentFontTarget === 'body') {
+                const content = document.getElementById('chapterContent');
+                if (content) {
+                    content.style.fontSize = (1.1 * settings.size / 100) + 'rem';
+                }
+            }
+        }
+
+        function saveFontSettings() {
+            localStorage.setItem('userFontSettings', JSON.stringify(fontSettings));
+            localStorage.setItem('userFontTarget', currentFontTarget);
+        }
+
+        function loadFontSettings() {
+            const saved = localStorage.getItem('userFontSettings');
+            const savedTarget = localStorage.getItem('userFontTarget');
+            
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    Object.keys(parsed).forEach(key => {
+                        if (fontSettings[key]) {
+                            fontSettings[key] = { ...fontSettings[key], ...parsed[key] };
+                        }
+                    });
+                } catch(e) {
+                    console.error('Failed to parse font settings:', e);
+                }
+            }
+            
+            if (savedTarget && fontSettings[savedTarget]) {
+                currentFontTarget = savedTarget;
+                const targetSelect = document.getElementById('fontTargetSelect');
+                if (targetSelect) targetSelect.value = currentFontTarget;
+            }
+            
+            Object.keys(fontSettings).forEach(target => {
+                const prevTarget = currentFontTarget;
+                currentFontTarget = target;
+                applyFontStyles();
+                currentFontTarget = prevTarget;
+            });
+            
+            updateFontSettingsUI();
+        }
+
+        function resetFontSettings() {
+            const defaults = {
+                body: { family: '', size: 100, weight: '400' },
+                headings: { family: '', size: 100, weight: '700' },
+                hero: { family: '', size: 100, weight: '900' },
+                buttons: { family: '', size: 100, weight: '500' }
+            };
+            
+            fontSettings[currentFontTarget] = { ...defaults[currentFontTarget] };
+            
+            document.querySelectorAll('.section-desc, .hero-subtitle, .chapter-content p, .chapter-content li, .section-title, .chapter-content h2, .chapter-content h3, .chapter-title, .btn, .toolbar-btn').forEach(el => {
+                el.style.fontFamily = '';
+                el.style.fontWeight = '';
+            });
+            
+            const content = document.getElementById('chapterContent');
+            if (content) {
+                content.style.fontSize = '';
+            }
+            
+            const hero = document.getElementById('heroTitle');
+            if (hero) {
+                hero.style.fontSize = '';
+            }
+            
+            updateFontSettingsUI();
+            saveFontSettings();
+            
+            loadSettings();
+        }
+        
+        // ==================== 笔记功能 ====================
+        
+        // 初始化笔记设置
+        function initNotesSettings() {
+            const savedSettings = localStorage.getItem(NOTES_SETTINGS_KEY);
+            if (savedSettings) {
+                try {
+                    const settings = JSON.parse(savedSettings);
+                    const fontFamilySelect = document.getElementById('notesFontFamily');
+                    const fontSizeInput = document.getElementById('notesFontSize');
+                    const fontColorInput = document.getElementById('notesFontColor');
+                    
+                    if (fontFamilySelect && settings.fontFamily) fontFamilySelect.value = settings.fontFamily;
+                    if (fontSizeInput && settings.fontSize) fontSizeInput.value = settings.fontSize;
+                    if (fontColorInput && settings.fontColor) fontColorInput.value = settings.fontColor;
+                    
+                    updateNotesFont();
+                } catch(e) {
+                    console.error('Failed to parse notes settings:', e);
+                }
+            } else {
+                updateNotesFont();
+            }
+        }
+        
+        // 更新笔记字体样式
+        function updateNotesFont() {
+            const textarea = document.getElementById('notesTextarea');
+            const fontFamilySelect = document.getElementById('notesFontFamily');
+            const fontSizeInput = document.getElementById('notesFontSize');
+            const fontColorInput = document.getElementById('notesFontColor');
+            
+            if (!textarea) return;
+            
+            const fontFamily = fontFamilySelect ? fontFamilySelect.value : 'Inter';
+            const fontSize = fontSizeInput ? fontSizeInput.value + 'px' : '14px';
+            const fontColor = fontColorInput ? fontColorInput.value : '#4A3728';
+            
+            textarea.style.fontFamily = `'${fontFamily}', sans-serif`;
+            textarea.style.fontSize = fontSize;
+            textarea.style.color = fontColor;
+            
+            // 保存设置
+            const settings = {
+                fontFamily: fontFamily,
+                fontSize: fontSizeInput ? fontSizeInput.value : '14',
+                fontColor: fontColor
+            };
+            localStorage.setItem(NOTES_SETTINGS_KEY, JSON.stringify(settings));
+        }
+        
+        // 获取当前笔记输入时触发
+        function onNotesInput() {
+            const statusEl = document.getElementById('notesSaveStatus');
+            if (statusEl) {
+                statusEl.textContent = 'Saving...';
+                statusEl.classList.remove('saved');
+            }
+            
+            // 防抖保存
+            clearTimeout(notesSaveTimer);
+            notesSaveTimer = setTimeout(() => {
+                saveNotes();
+            }, 500);
+        }
+        
+        // 保存笔记
+        function saveNotes() {
+            if (!currentChapterId) return;
+            
+            const textarea = document.getElementById('notesTextarea');
+            if (!textarea) return;
+            
+            const notesData = getNotesData();
+            notesData[currentChapterId] = {
+                content: textarea.value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notesData));
+            
+            const statusEl = document.getElementById('notesSaveStatus');
+            if (statusEl) {
+                statusEl.textContent = 'Auto-saved';
+                statusEl.classList.add('saved');
+            }
+        }
+        
+        // 获取所有笔记数据
+        function getNotesData() {
+            const saved = localStorage.getItem(NOTES_STORAGE_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {
+                    console.error('Failed to parse notes data:', e);
+                }
+            }
+            return {};
+        }
+        
+        // 加载指定章节的笔记
+        function loadChapterNotes(chapterId) {
+            currentChapterId = chapterId;
+            const textarea = document.getElementById('notesTextarea');
+            if (!textarea) return;
+            
+            const notesData = getNotesData();
+            const chapterNotes = notesData[chapterId];
+            
+            textarea.value = chapterNotes ? chapterNotes.content : '';
+            
+            const statusEl = document.getElementById('notesSaveStatus');
+            if (statusEl) {
+                statusEl.textContent = 'Auto-saved';
+                statusEl.classList.add('saved');
+            }
+        }
+        
+        // 清空笔记
+        function clearNotes() {
+            const textarea = document.getElementById('notesTextarea');
+            if (!textarea) return;
+            
+            if (textarea.value && !confirm('Are you sure you want to clear all notes for this chapter?')) {
+                return;
+            }
+            
+            textarea.value = '';
+            saveNotes();
+        }
+        
+        // 获取笔记字体设置（用于PDF导出）
+        function getNotesFontSettings() {
+            const saved = localStorage.getItem(NOTES_SETTINGS_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {}
+            }
+            return {
+                fontFamily: 'Inter',
+                fontSize: '14',
+                fontColor: '#4A3728'
+            };
+        }
+        
+        // ==================== 断页线分页功能 ====================
+        
+        // 根据断页线将章节内容分割为多个子页面
+        function parseContentIntoPages(htmlContent) {
+            if (!htmlContent || htmlContent.trim() === '') {
+                return ['<p>No content available</p>'];
+            }
+            
+            // 方法1：先用DOM检查是否有断页线
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = htmlContent;
+            
+            const markers = testDiv.querySelectorAll('.page-break-marker');
+            if (markers.length === 0) {
+                return [htmlContent];
+            }
+            
+            // 有断页线，用DOM方法处理
+            // 把所有断页线替换成一个特殊的标记span
+            markers.forEach((marker, index) => {
+                const splitMarker = document.createElement('span');
+                splitMarker.setAttribute('data-page-split', index);
+                splitMarker.style.display = 'none';
+                marker.parentNode.replaceChild(splitMarker, marker);
+            });
+            
+            // 现在按标记分割
+            // 思路：使用TreeWalker遍历所有节点，遇到标记就分页
+            
+            const pages = [];
+            let currentPage = document.createElement('div');
+            
+            function processNode(node, parent) {
+                if (node.nodeType === Node.ELEMENT_NODE && 
+                    node.hasAttribute && 
+                    node.hasAttribute('data-page-split')) {
+                    // 遇到分页标记
+                    pages.push(currentPage.innerHTML);
+                    currentPage = document.createElement('div');
+                    return;
+                }
+                
+                // 检查元素内部是否有分页标记
+                if (node.nodeType === Node.ELEMENT_NODE && node.childNodes.length > 0) {
+                    const hasSplit = node.querySelector('[data-page-split]');
+                    if (hasSplit) {
+                        // 需要拆分这个元素
+                        const cloneBefore = node.cloneNode(false);
+                        const cloneAfter = node.cloneNode(false);
+                        let beforeSplit = true;
+                        
+                        for (let i = 0; i < node.childNodes.length; i++) {
+                            const child = node.childNodes[i];
+                            if (child.nodeType === Node.ELEMENT_NODE && 
+                                child.hasAttribute && 
+                                child.hasAttribute('data-page-split')) {
+                                beforeSplit = false;
+                                // 保存before
+                                currentPage.appendChild(cloneBefore);
+                                pages.push(currentPage.innerHTML);
+                                currentPage = document.createElement('div');
+                            } else if (beforeSplit) {
+                                processNode(child, cloneBefore);
+                            } else {
+                                processNode(child, cloneAfter);
+                            }
+                        }
+                        
+                        // 把after部分加到当前页
+                        // 但需要处理cloneAfter内部可能还有更多split
+                        if (cloneAfter.childNodes.length > 0) {
+                            currentPage.appendChild(cloneAfter);
+                        }
+                        return;
+                    }
+                }
+                
+                // 普通节点，克隆
+                parent.appendChild(node.cloneNode(true));
+            }
+            
+            const children = Array.from(testDiv.childNodes);
+            children.forEach(child => processNode(child, currentPage));
+            
+            // 最后一页
+            pages.push(currentPage.innerHTML);
+            
+            // 过滤掉空页（没有实际内容的）
+            const filteredPages = pages.filter(p => {
+                const temp = document.createElement('div');
+                temp.innerHTML = p;
+                const hasText = temp.textContent.trim() !== '';
+                const hasMedia = temp.querySelector('img, video, audio, iframe, table, svg');
+                return hasText || hasMedia;
+            });
+            
+            return filteredPages.length > 0 ? filteredPages : [htmlContent];
+        }
+        
+        // 显示指定子页面
+        function showSubPage(pageIndex, direction = 'next') {
+            if (pageIndex < 0 || pageIndex >= subPages.length) return;
+            if (isPageFlipping) return;
+            
+            const effect = getUserPageTurnEffect();
+            const contentEl = document.getElementById('chapterContent');
+            
+            if (effect === 'real-flip') {
+                isPageFlipping = true;
+                
+                const underlay = createUnderlay(contentEl, subPages[pageIndex]);
+                const flipLayer = createFlipLayer(contentEl, direction);
+                
+                setTimeout(() => {
+                    currentSubPage = pageIndex;
+                    contentEl.innerHTML = subPages[pageIndex];
+                    updateSubPageNavigation();
+                    applyFontSize();
+                    renderContentFormulas();
+                    saveReadingPosition();
+                    
+                    if (flipLayer && flipLayer.parentNode) {
+                        flipLayer.parentNode.removeChild(flipLayer);
+                    }
+                    if (underlay && underlay.parentNode) {
+                        underlay.parentNode.removeChild(underlay);
+                    }
+                    
+                    isPageFlipping = false;
+                }, FLIP_DURATION);
+            } else {
+                isPageFlipping = true;
+                
+                contentEl.style.transition = 'none';
+                contentEl.style.opacity = '0';
+                
+                if (effect === 'slide') {
+                    contentEl.style.transform = direction === 'next' ? 'translateX(30px)' : 'translateX(-30px)';
+                } else if (effect === 'flip') {
+                    contentEl.style.transform = `perspective(1000px) rotateY(${direction === 'next' ? '-10deg' : '10deg'})`;
+                    contentEl.style.transformOrigin = 'center center';
+                }
+                
+                requestAnimationFrame(() => {
+                    currentSubPage = pageIndex;
+                    contentEl.innerHTML = subPages[pageIndex];
+                    updateSubPageNavigation();
+                    applyFontSize();
+                    renderContentFormulas();
+                    saveReadingPosition();
+                    
+                    requestAnimationFrame(() => {
+                        if (effect === 'slide') {
+                            contentEl.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+                            contentEl.style.opacity = '1';
+                            contentEl.style.transform = 'translateX(0)';
+                        } else if (effect === 'fade') {
+                            contentEl.style.transition = 'opacity 0.35s ease';
+                            contentEl.style.opacity = '1';
+                        } else if (effect === 'flip') {
+                            contentEl.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                            contentEl.style.opacity = '1';
+                            contentEl.style.transform = 'perspective(1000px) rotateY(0)';
+                        } else {
+                            contentEl.style.opacity = '1';
+                        }
+                        
+                        setTimeout(() => {
+                            isPageFlipping = false;
+                        }, 400);
+                    });
+                });
+            }
+        }
+        
+        // 更新子页面导航
+        function updateSubPageNavigation() {
+            const nav = document.getElementById('pageNavigation');
+            if (!nav) return;
+            
+            const showPageNumbers = siteSettings.showPageNumbers !== '0';
+            if (!showPageNumbers) return;
+            
+            const totalPages = subPages.length;
+            const isFirstPageOfChapter = currentSubPage === 0 && currentChapterIndex === 0;
+            const isLastPageOfChapter = currentSubPage === subPages.length - 1 && currentChapterIndex === chaptersList.length - 1;
+            
+            // 上一页/上一章按钮
+            let prevBtn;
+            if (currentSubPage > 0) {
+                prevBtn = `<button class="nav-btn nav-btn-secondary" onclick="prevSubPage()">← Previous</button>`;
+            } else if (currentChapterIndex > 0) {
+                prevBtn = `<button class="nav-btn nav-btn-secondary" onclick="prevChapter()">← Prev Chapter</button>`;
+            } else {
+                prevBtn = `<div style="width: 100px;"></div>`;
+            }
+            
+            // 下一页/下一章按钮
+            let nextBtn;
+            if (currentSubPage < subPages.length - 1) {
+                nextBtn = `<button class="nav-btn nav-btn-primary" onclick="nextSubPage()">Next →</button>`;
+            } else if (currentChapterIndex < chaptersList.length - 1) {
+                nextBtn = `<button class="nav-btn nav-btn-primary" onclick="nextChapter()">Next Chapter →</button>`;
+            } else {
+                nextBtn = `<div style="width: 100px;"></div>`;
+            }
+            
+            // 页码显示
+            let totalAllPages = 0;
+            // 计算当前章节之前的总页数
+            // 注意：这里简化处理，只显示当前章节内的页码
+            // 如果需要显示全书总页数，需要预先解析所有章节
+            const pageDisplay = totalPages > 1 
+                ? `Page ${currentSubPage + 1} of ${totalPages} (Chapter ${currentChapterIndex + 1})`
+                : `Chapter ${currentChapterIndex + 1} of ${chaptersList.length}`;
+            
+            nav.innerHTML = `
+                <div class="page-nav-inner">
+                    ${prevBtn}
+                    <span class="page-number">
+                        ${pageDisplay}
+                    </span>
+                    ${nextBtn}
+                </div>
+            `;
+        }
+        
+        // 上一子页面
+        function prevSubPage() {
+            if (currentSubPage > 0) {
+                showSubPage(currentSubPage - 1, 'prev');
+                window.scrollTo(0, 0);
+            }
+        }
+        
+        // 下一子页面
+        function nextSubPage() {
+            if (currentSubPage < subPages.length - 1) {
+                showSubPage(currentSubPage + 1, 'next');
+                window.scrollTo(0, 0);
+            }
+        }
+        
+        // 导出PDF
+        function exportPDF(mode = 'content') {
+            const chapterTitle = document.getElementById('chapterTitle').textContent;
+            const content = document.getElementById('chapterContent');
+            const notesTextarea = document.getElementById('notesTextarea');
+            const notesContent = notesTextarea ? notesTextarea.value : '';
+            const notesSettings = getNotesFontSettings();
+            
+            // 生成导出时间
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const exportTime = `${year}-${month}-${day} ${hours}:${minutes}`;
+            
+            // 创建打印样式
+            const printWindow = window.open('', '_blank');
+            
+            if (mode === 'with-notes') {
+                // 带笔记导出 - A4横向，左侧正文，右侧笔记
+                printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${chapterTitle} - with Notes</title>
+                    <style>
+                        @page {
+                            size: A4 landscape;
+                            margin: 15mm;
+                        }
+                        * {
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Times New Roman', Georgia, serif;
+                            font-size: 11pt;
+                            line-height: 1.6;
+                            color: #333;
+                            margin: 0;
+                            padding: 0;
+                            display: flex;
+                            flex-direction: column;
+                            min-height: 100vh;
+                        }
+                        h1 {
+                            text-align: center;
+                            margin: 0 0 15px 0;
+                            font-size: 16pt;
+                            padding-bottom: 10px;
+                            border-bottom: 2px solid #ddd;
+                        }
+                        h2 {
+                            margin-top: 15px;
+                            font-size: 13pt;
+                        }
+                        h3 {
+                            margin-top: 12px;
+                            font-size: 12pt;
+                        }
+                        p {
+                            margin: 8px 0;
+                            text-align: justify;
+                        }
+                        img {
+                            max-width: 100%;
+                            height: auto;
+                        }
+                        .page-container {
+                            display: flex;
+                            gap: 20px;
+                            width: 100%;
+                            flex: 1;
+                        }
+                        .content-section {
+                            flex: 0 0 62%;
+                            padding-right: 20px;
+                            border-right: 2px solid #ddd;
+                        }
+                        .notes-section {
+                            flex: 1;
+                            padding-left: 0;
+                        }
+                        .notes-header {
+                            font-weight: bold;
+                            font-size: 12pt;
+                            margin-bottom: 10px;
+                            padding-bottom: 8px;
+                            border-bottom: 1px solid #ddd;
+                            color: #555;
+                        }
+                        .notes-content {
+                            font-family: '${notesSettings.fontFamily}', sans-serif;
+                            font-size: ${parseInt(notesSettings.fontSize) * 0.75}pt;
+                            color: ${notesSettings.fontColor};
+                            line-height: 1.7;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                        .chapter-content-inner {
+                            max-width: 100%;
+                        }
+                        .chapter-content-inner h2:first-child {
+                            margin-top: 0;
+                        }
+                        ul, ol {
+                            margin: 8px 0;
+                            padding-left: 20px;
+                        }
+                        li {
+                            margin: 4px 0;
+                        }
+                        .export-footer {
+                            margin-top: 20px;
+                            padding-top: 10px;
+                            border-top: 1px solid #ddd;
+                            font-size: 9pt;
+                            color: #888;
+                            text-align: right;
+                            font-style: italic;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${chapterTitle}</h1>
+                    <div class="page-container">
+                        <div class="content-section">
+                            <div class="chapter-content-inner">
+                                ${content.innerHTML}
+                            </div>
+                        </div>
+                        <div class="notes-section">
+                            <div class="notes-header">📝 Notes</div>
+                            <div class="notes-content">${notesContent || '(No notes)'}</div>
+                        </div>
+                    </div>
+                    <div class="export-footer">
+                        Exported on ${exportTime}
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            } else {
+                // 仅正文导出 - A4纵向
+                printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${chapterTitle}</title>
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 25mm;
+                        }
+                        body {
+                            font-family: 'Times New Roman', Georgia, serif;
+                            font-size: 12pt;
+                            line-height: 1.6;
+                            color: #333;
+                            display: flex;
+                            flex-direction: column;
+                            min-height: 100vh;
+                        }
+                        h1 {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            font-size: 18pt;
+                        }
+                        h2 {
+                            margin-top: 20px;
+                            font-size: 14pt;
+                        }
+                        h3 {
+                            margin-top: 15px;
+                            font-size: 13pt;
+                        }
+                        p {
+                            margin: 10px 0;
+                            text-align: justify;
+                        }
+                        img {
+                            max-width: 100%;
+                            height: auto;
+                        }
+                        .chapter-content-inner {
+                            max-width: 100%;
+                            flex: 1;
+                        }
+                        ul, ol {
+                            margin: 10px 0;
+                            padding-left: 1.5em;
+                        }
+                        li {
+                            margin: 5px 0;
+                        }
+                        .export-footer {
+                            margin-top: 30px;
+                            padding-top: 15px;
+                            border-top: 1px solid #ddd;
+                            font-size: 10pt;
+                            color: #888;
+                            text-align: right;
+                            font-style: italic;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>${chapterTitle}</h1>
+                    <div class="chapter-content-inner">
+                        ${content.innerHTML}
+                    </div>
+                    <div class="export-footer">
+                        Exported on ${exportTime}
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            }
+            
+            printWindow.document.close();
+        }
+        
+        // 切换导出下拉菜单
+        function toggleExportDropdown() {
+            const menu = document.getElementById('exportMenu');
+            menu.classList.toggle('show');
+            // 关闭其他下拉菜单
+            document.getElementById('pageEffectMenu').classList.remove('show');
+            document.getElementById('fontDropdownMenu').classList.remove('show');
+        }
+        
+        // 创建翻页层
+        function createFlipLayer(contentEl, direction) {
+            const reader = document.getElementById('chapterReader');
+            
+            // 克隆内容
+            const clone = contentEl.cloneNode(true);
+            clone.id = '';
+            clone.className += ' page-content-clone';
+            clone.style.margin = '0';
+            clone.style.maxWidth = 'none';
+            clone.style.border = 'none';
+            clone.style.background = 'transparent';
+            clone.style.backdropFilter = 'none';
+            clone.style.webkitBackdropFilter = 'none';
+            clone.style.padding = '60px';
+            
+            // 创建翻页层
+            const flipLayer = document.createElement('div');
+            flipLayer.className = 'page-flip-layer' + (direction === 'next' ? ' flipping-next' : ' flipping-prev');
+            
+            // 添加正面内容
+            const frontFace = document.createElement('div');
+            frontFace.className = 'page-flip-front';
+            frontFace.appendChild(clone);
+            
+            // 正面弯曲光影层
+            const frontBend = document.createElement('div');
+            frontBend.className = 'page-bend-overlay';
+            frontFace.appendChild(frontBend);
+            
+            // 正面边缘阴影
+            const frontEdgeShadow = document.createElement('div');
+            frontEdgeShadow.className = 'page-edge-shadow';
+            frontFace.appendChild(frontEdgeShadow);
+            
+            // 添加背面
+            const backFace = document.createElement('div');
+            backFace.className = 'page-flip-back';
+            
+            // 背面弯曲光影层
+            const backBend = document.createElement('div');
+            backBend.className = 'page-bend-overlay';
+            backFace.appendChild(backBend);
+            
+            // 书页底部阴影
+            const pageShadow = document.createElement('div');
+            pageShadow.className = 'page-shadow';
+            flipLayer.appendChild(pageShadow);
+            
+            flipLayer.appendChild(frontFace);
+            flipLayer.appendChild(backFace);
+            
+            // 设置尺寸
+            const rect = contentEl.getBoundingClientRect();
+            const readerRect = reader.getBoundingClientRect();
+            flipLayer.style.height = rect.height + 'px';
+            flipLayer.style.top = (rect.top - readerRect.top) + 'px';
+            
+            reader.appendChild(flipLayer);
+            
+            return flipLayer;
+        }
+
+        // 添加翻页导航
+        function addPageNavigation() {
+            const showPageNumbers = siteSettings.showPageNumbers !== '0';
+            if (!showPageNumbers || chaptersList.length === 0) {
+                const existingNav = document.getElementById('pageNavigation');
+                if (existingNav) existingNav.remove();
+                return;
+            }
+            
+            let nav = document.getElementById('pageNavigation');
+            if (!nav) {
+                nav = document.createElement('div');
+                nav.id = 'pageNavigation';
+                nav.className = 'page-navigation';
+                document.body.appendChild(nav);
+            }
+            
+            const prevBtn = currentChapterIndex > 0 
+                ? `<button class="nav-btn nav-btn-secondary" onclick="prevChapter()">← Previous</button>`
+                : `<div style="width: 100px;"></div>`;
+            
+            const nextBtn = currentChapterIndex < chaptersList.length - 1
+                ? `<button class="nav-btn nav-btn-primary" onclick="nextChapter()">Next →</button>`
+                : `<div style="width: 100px;"></div>`;
+            
+            nav.innerHTML = `
+                <div class="page-nav-inner">
+                    ${prevBtn}
+                    <span class="page-number">
+                        Page ${currentChapterIndex + 1} of ${chaptersList.length}
+                    </span>
+                    ${nextBtn}
+                </div>
+            `;
+        }
+
+        // 应用翻页效果
+        function applyPageTurnEffect() {
+            const effect = getUserPageTurnEffect();
+            const chapterPage = document.getElementById('chapterPage');
+            
+            chapterPage.style.transition = 'none';
+            chapterPage.style.opacity = '0';
+            
+            if (effect === 'slide') {
+                chapterPage.style.transform = 'translateX(50px)';
+                requestAnimationFrame(() => {
+                    chapterPage.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    chapterPage.style.opacity = '1';
+                    chapterPage.style.transform = 'translateX(0)';
+                });
+            } else if (effect === 'fade') {
+                requestAnimationFrame(() => {
+                    chapterPage.style.transition = 'opacity 0.4s ease';
+                    chapterPage.style.opacity = '1';
+                });
+            } else if (effect === 'flip') {
+                chapterPage.style.transform = 'perspective(1000px) rotateY(-15deg)';
+                requestAnimationFrame(() => {
+                    chapterPage.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    chapterPage.style.opacity = '1';
+                    chapterPage.style.transform = 'perspective(1000px) rotateY(0)';
+                });
+            } else if (effect === 'real-flip') {
+                const contentEl = document.getElementById('chapterContent');
+                contentEl.style.opacity = '0';
+                contentEl.style.transform = 'rotateY(-30deg)';
+                contentEl.style.transformOrigin = 'left center';
+                requestAnimationFrame(() => {
+                    contentEl.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    contentEl.style.opacity = '1';
+                    chapterPage.style.opacity = '1';
+                    contentEl.style.transform = 'rotateY(0)';
+                });
+            } else {
+                chapterPage.style.opacity = '1';
+            }
+        }
+
+        // 上一章
+        function prevChapter() {
+            if (currentChapterIndex > 0) {
+                const prevChapter = chaptersList[currentChapterIndex - 1];
+                showChapter(prevChapter.id, currentChapterIndex - 1, 'prev');
+            }
+        }
+
+        // 下一章
+        function nextChapter() {
+            if (currentChapterIndex < chaptersList.length - 1) {
+                const nextChapter = chaptersList[currentChapterIndex + 1];
+                showChapter(nextChapter.id, currentChapterIndex + 1, 'next');
+            }
+        }
+
+        // 返回科目页
+        function goBackToSubject() {
+            document.getElementById('chapterPage').style.display = 'none';
+            document.getElementById('subjectPage').style.display = 'block';
+            const nav = document.getElementById('pageNavigation');
+            if (nav) nav.style.display = 'none';
+            currentPage = 'subject';
+            saveReadingPosition();
+        }
+
+        // 返回首页
+        function goBackToHome() {
+            document.getElementById('chapterPage').style.display = 'none';
+            document.getElementById('subjectPage').style.display = 'none';
+            document.getElementById('homePage').style.display = 'block';
+            window.scrollTo(0, 0);
+            const nav = document.getElementById('pageNavigation');
+            if (nav) nav.style.display = 'none';
+            currentSubjectId = null;
+            currentChapterIndex = 0;
+            currentSubPage = 0;
+            currentPage = 'home';
+            saveReadingPosition();
+        }
+
+        // 显示首页
+        function showHomePage() {
+            document.getElementById('chapterPage').style.display = 'none';
+            document.getElementById('subjectPage').style.display = 'none';
+            document.getElementById('homePage').style.display = 'block';
+            window.scrollTo(0, 0);
+            const nav = document.getElementById('pageNavigation');
+            if (nav) nav.style.display = 'none';
+            currentSubjectId = null;
+            currentChapterIndex = 0;
+            currentSubPage = 0;
+            currentPage = 'home';
+            saveReadingPosition();
+        }
+
+        </script>
+</body>
+</html>
