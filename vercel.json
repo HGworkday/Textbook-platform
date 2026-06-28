@@ -16,8 +16,5 @@
       "dest": "/server/index.js"
     }
   ],
-  "env": {
-    "JWT_SECRET": "@jwt-secret"
-  },
   "regions": ["iad1"]
 }
