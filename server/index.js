@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const IS_VERCEL = process.env.VERCEL === 'true';
+const IS_VERCEL = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 // 中间件
 app.use(cors());
