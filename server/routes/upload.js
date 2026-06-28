@@ -10,38 +10,57 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
-const JWT_SECRET = 'textbook-platform-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'textbook-platform-secret-key-2024';
+const IS_VERCEL = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+let upload;
+let uploadDir;
 
-// 配置文件上传
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, uniqueSuffix + ext);
-    }
-});
-
-const upload = multer({ 
-    storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('不支持的文件类型'));
+if (IS_VERCEL) {
+    // Vercel环境：使用内存存储
+    upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 10 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+            if (allowedTypes.includes(file.mimetype)) {
+                cb(null, true);
+            } else {
+                cb(new Error('不支持的文件类型'));
+            }
         }
+    });
+} else {
+    // 本地环境：磁盘存储
+    uploadDir = path.join(__dirname, '../../uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
     }
-});
+
+    const storage = multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const ext = path.extname(file.originalname);
+            cb(null, uniqueSuffix + ext);
+        }
+    });
+
+    upload = multer({
+        storage,
+        limits: { fileSize: 10 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+            if (allowedTypes.includes(file.mimetype)) {
+                cb(null, true);
+            } else {
+                cb(new Error('不支持的文件类型'));
+            }
+        }
+    });
+}
 
 // 验证登录
 function requireAuth(req, res, next) {
@@ -65,17 +84,30 @@ router.post('/', requireAuth, upload.single('file'), (req, res) => {
             return res.status(400).json({ error: '请选择要上传的文件' });
         }
 
+        let filename, url;
+
+        if (IS_VERCEL) {
+            // Vercel环境：使用base64返回（不持久化）
+            const base64 = req.file.buffer.toString('base64');
+            filename = req.file.originalname;
+            url = `data:${req.file.mimetype};base64,${base64}`;
+        } else {
+            // 本地环境：磁盘存储
+            filename = req.file.filename;
+            url = `/uploads/${req.file.filename}`;
+        }
+
         // 记录到数据库
         const result = run(`
             INSERT INTO uploads (filename, originalname, mimetype, size, user_id)
             VALUES (?, ?, ?, ?, ?)
-        `, [req.file.filename, req.file.originalname, req.file.mimetype, req.file.size, req.user.id]);
+        `, [filename, req.file.originalname, req.file.mimetype, req.file.size, req.user.id]);
 
         res.json({
             id: result.lastInsertRowid,
-            filename: req.file.filename,
+            filename: filename,
             originalname: req.file.originalname,
-            url: `/uploads/${req.file.filename}`,
+            url: url,
             size: req.file.size
         });
     } catch (error) {
