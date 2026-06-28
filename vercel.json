@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "server/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["server/**", "public/**", "admin/**"]
+      }
     }
   ],
   "routes": [
@@ -12,9 +15,24 @@
       "dest": "/server/index.js"
     },
     {
+      "src": "/admin",
+      "dest": "/server/index.js"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/server/index.js"
+    },
+    {
+      "src": "/subject/(.*)",
+      "dest": "/server/index.js"
+    },
+    {
+      "src": "/chapter/(.*)",
+      "dest": "/server/index.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/server/index.js"
     }
-  ],
-  "regions": ["iad1"]
+  ]
 }
