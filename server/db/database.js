@@ -10,10 +10,13 @@ const __dirname = path.dirname(__filename);
 const dataDir = path.join(__dirname, '../../data');
 const dbPath = path.join(dataDir, 'textbook.db');
 
-const IS_VERCEL = process.env.VERCEL === 'true';
+const IS_VERCEL = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-if (!IS_VERCEL && !fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+// 只在非Vercel环境下操作文件系统
+if (!IS_VERCEL) {
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
 }
 
 let db = null;
